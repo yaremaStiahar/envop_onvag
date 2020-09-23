@@ -1,6 +1,19 @@
 #include <iostream>
+#include <string>
+#include <set>
+#include <map>
+#include <algorithm>
+#include <iomanip>
 #include <vector>
+#include <cmath>
+#include <queue>
+#include <sstream>
+#include <ctime>
+#include <iterator>
+#include <string.h>
+#include <stack>
 #include <thread>
+#include <ctime>
 #include <chrono>
 
 
@@ -40,7 +53,6 @@ vector<double> gaus(int threadNumber)
 				if (j == n)
 				{
 					std::cerr << "dcp";
-					return {};
 				}
 			}
 		}
@@ -49,20 +61,18 @@ vector<double> gaus(int threadNumber)
 		vector<std::thread> threads;
 		int start = i+1;
 		int end;
-		int index = i;
 		for (size_t j = 0; j < threadNumber; j++)
 		{
-			end = (j == threadNumber-1) ? n : start + step;
-			threads.push_back(std::thread([&index, &start, &end]()
+			end = j == threadNumber-1 ? n : start + step;
+			threads.push_back(std::thread([i, start, end]()
 				{
+					int index = i;
 					for (size_t i = start; i < end; i++)
 					{
-						double coeficient = m[index][index] / m[i][index];
-
+						double coeficient = m[i][index] / m[index][index];
 						for (size_t j = index; j <= n; j++)
 						{
-							m[i][j] *= coeficient;
-							m[i][j] -= m[index][j];
+							m[i][j] -= coeficient*m[index][j];
 						}
 					}
 				}
@@ -89,7 +99,7 @@ int main()
 	std::ios_base::sync_with_stdio(0);
 	srand(time(NULL));
 	vector<int> k{ 1,2, 4, 10 ,16};
-	for (auto& potoky : k)
+	for (auto potoky : k)
 	{
 		for (int i = 0; i < n; i++) for (int j = 0; j <= n; j++) m[i][j] = rand() % 100;
 		auto start = system_clock::now();
