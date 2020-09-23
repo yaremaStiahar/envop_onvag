@@ -1,0 +1,99 @@
+#include <iostream>
+#include <vector>
+#include <thread>
+#include <chrono>
+
+
+using std::vector;
+using namespace std::chrono;
+
+
+const int n = 2000;
+
+vector<vector<double>> m(n, vector<double>(n + 1));
+
+void print()
+{
+	for (size_t i = 0; i < n; i++)
+	{
+		for (size_t j = 0; j <= n; j++)
+		{
+			std::cout << m[i][j] << ' ';
+		}
+		std::cout << std::endl;
+	}
+}
+
+vector<double> gaus(int threadNumber)
+{
+	for (size_t i = 0; i < n-1; i++)
+	{
+		if (m[i][i] == 0)
+		{
+			for (size_t j = i+1; j < n; j++)
+			{
+				if (m[j][i])
+				{
+					std::swap(m[i], m[j]);
+					break;
+				}
+				if (j == n)
+				{
+					std::cerr << "dcp";
+					return {};
+				}
+			}
+		}
+		int needToZero = n - i - 1;
+		int step = needToZero / threadNumber;
+		vector<std::thread> threads;
+		int start = i+1;
+		int end;
+		int index = i;
+		for (size_t j = 0; j < threadNumber; j++)
+		{
+			end = (j == threadNumber-1) ? n : start + step;
+			threads.push_back(std::thread([&index, &start, &end]()
+				{
+					for (size_t i = start; i < end; i++)
+					{
+						double coeficient = m[index][index] / m[i][index];
+
+						for (size_t j = index; j <= n; j++)
+						{
+							m[i][j] *= coeficient;
+							m[i][j] -= m[index][j];
+						}
+					}
+				}
+			));
+			start += step;
+		}
+		for (auto& t : threads) t.join();
+	}
+	vector<double> ans(n);
+	for (int i = n-1; i >= 0; i--)
+	{
+		double val = m[i][n];
+		for (int j = i + 1; j < n; j++)
+		{
+			val -= m[i][j] * ans[j];
+		}
+		ans[i] = val / m[i][i];
+	}
+	return ans;
+}
+
+int main()
+{
+	std::ios_base::sync_with_stdio(0);
+	srand(time(NULL));
+	vector<int> k{ 1,2, 4, 10 ,16};
+	for (auto& potoky : k)
+	{
+		for (int i = 0; i < n; i++) for (int j = 0; j <= n; j++) m[i][j] = rand() % 100;
+		auto start = system_clock::now();
+		auto ans = gaus(potoky);
+		std::cout << "time with " << potoky << " additional threads: " << duration_cast<milliseconds>(system_clock::now() - start).count() << std::endl;
+	}
+}
